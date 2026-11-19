@@ -12,6 +12,11 @@ import androidx.fragment.app.Fragment;
 
 import com.google.firebase.auth.FirebaseAuth;
 
+/**
+ * MainActivity acts as the host container activity for all fragments in the application.
+ * Implements fragment communication interfaces for Login, SignUp, TripMap, and SavedTrips.
+ * Checks Firebase Auth state on startup to determine initial screen (TripMap vs Login).
+ */
 public class MainActivity extends AppCompatActivity implements
         LoginFragment.LoginListener,
         SignUpFragment.SignUpListener,
@@ -24,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
+            // Check if user session already persists in Firebase Auth
             if (FirebaseAuth.getInstance().getCurrentUser() != null) {
                 replaceFragment(TripMapFragment.newInstance(null), false);
             } else {
@@ -32,6 +38,9 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    /**
+     * Helper method to replace fragments inside the fragment container.
+     */
     private void replaceFragment(Fragment fragment, boolean addToBackStack) {
         var transaction = getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment);

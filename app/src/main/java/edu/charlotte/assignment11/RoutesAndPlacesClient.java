@@ -33,6 +33,12 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+/**
+ * RoutesAndPlacesClient handles HTTP requests via OkHttp to:
+ * 1. Google Routes API v2 (computeRoutes) to retrieve encoded polyline directions.
+ * 2. Places API (New) (searchNearby) to discover gas stations near start, mid, and destination points.
+ * Also dynamically computes the app's signing certificate SHA-1 fingerprint for API key authentication security headers.
+ */
 public class RoutesAndPlacesClient {
     private static final String TAG = "RoutesAndPlacesClient";
     private static final OkHttpClient client = new OkHttpClient();
@@ -98,7 +104,7 @@ public class RoutesAndPlacesClient {
     }
 
     /**
-     * Compute Route via Routes API v2
+     * Compute Route via Google Routes API v2
      */
     public static void fetchRoute(Context context, double startLat, double startLng, double endLat, double endLng, String apiKey, RouteCallback callback) {
         String url = "https://routes.googleapis.com/directions/v2:computeRoutes";
@@ -142,8 +148,6 @@ public class RoutesAndPlacesClient {
 
         Request request = requestBuilder.build();
 
-        Log.d(TAG, "Routes API v2 Request -> Package: " + packageName + " | Cert: " + (certSha1.isEmpty() ? "N/A" : "PRESENT"));
-
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -181,7 +185,7 @@ public class RoutesAndPlacesClient {
     }
 
     /**
-     * Fetch Gas Stations near a given LatLng using Places API (New)
+     * Fetch Gas Stations near a given LatLng using Places API (New) searchNearby
      */
     public static void fetchGasStationsNearby(Context context, LatLng location, String locationType, String apiKey, GasStationCallback callback) {
         String url = "https://places.googleapis.com/v1/places:searchNearby";
@@ -199,7 +203,7 @@ public class RoutesAndPlacesClient {
         center.addProperty("latitude", location.latitude);
         center.addProperty("longitude", location.longitude);
         circle.add("center", center);
-        circle.addProperty("radius", 5000.0);
+        circle.addProperty("radius", 5000.0); // 5km search radius
 
         JsonObject locationRestriction = new JsonObject();
         locationRestriction.add("circle", circle);
@@ -219,8 +223,6 @@ public class RoutesAndPlacesClient {
         }
 
         Request request = requestBuilder.build();
-
-        Log.d(TAG, "Places API (New) Request -> Package: " + packageName + " | Cert: " + (certSha1.isEmpty() ? "N/A" : "PRESENT"));
 
         client.newCall(request).enqueue(new Callback() {
             @Override

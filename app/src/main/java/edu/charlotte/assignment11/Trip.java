@@ -11,9 +11,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Trip data model representing a planned road trip, including start/end locations,
+ * encoded polyline for the route, associated gas stations, and creation timestamp.
+ * Implements Serializable to allow passing between fragments (e.g., from SavedTripsFragment to TripMapFragment).
+ */
 public class Trip implements Serializable {
-    private String docId;
-    private String userId;
+    private String docId; // Firestore document ID (excluded from Firestore doc fields via @Exclude)
+    private String userId; // Firebase Auth UID of the user who created the trip
     private String tripTitle;
     private String startAddress;
     private double startLat;
@@ -21,12 +26,12 @@ public class Trip implements Serializable {
     private String endAddress;
     private double endLat;
     private double endLng;
-    private String encodedPolyline;
-    private List<GasStation> gasStations = new ArrayList<>();
-    private long createdAt;
+    private String encodedPolyline; // Encoded polyline string from Routes API v2
+    private List<GasStation> gasStations = new ArrayList<>(); // Gas stations near start, mid, and end
+    private long createdAt; // Epoch timestamp for sorting trips
 
     public Trip() {
-        // Required for Firestore
+        // Required empty constructor for Firestore object mapping (deserialization)
     }
 
     public Trip(String userId, String tripTitle, String startAddress, double startLat, double startLng,

@@ -50,6 +50,15 @@ import java.util.List;
 
 import edu.charlotte.assignment11.databinding.FragmentTripMapBinding;
 
+/**
+ * TripMapFragment is the core screen of the application.
+ * Responsibilities:
+ * 1. Initialize Google Map and Places SDK (version 6.0.2 with New Places API enabled).
+ * 2. Launch Places Autocomplete intent to let users select start and destination locations.
+ * 3. Fetch driving routes between start and end using Routes API v2, and render polyline on the map.
+ * 4. Fetch nearby gas stations at the start, midpoint, and destination using Places API (New).
+ * 5. Save trip plans to Cloud Firestore or display previously saved trips selected from SavedTripsFragment.
+ */
 public class TripMapFragment extends Fragment implements OnMapReadyCallback {
 
     private static final String ARG_TRIP = "arg_trip";
@@ -87,6 +96,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
         // Required empty public constructor
     }
 
+    // Activity result launchers for Places Autocomplete (Start and Destination selection)
     private final ActivityResultLauncher<Intent> startAutocompleteLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> handleAutocompleteResult(result.getResultCode(), result.getData(), true));
@@ -95,6 +105,10 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
             new ActivityResultContracts.StartActivityForResult(),
             result -> handleAutocompleteResult(result.getResultCode(), result.getData(), false));
 
+    /**
+     * Handles the result returned from the Places Autocomplete widget intent.
+     * Fetches detailed Place info (coordinates, formatted address, display name) using Places SDK.
+     */
     private void handleAutocompleteResult(int resultCode, Intent data, boolean isStart) {
         if (resultCode == Activity.RESULT_CANCELED) return;
         if (data == null || resultCode != PlaceAutocompleteActivity.RESULT_OK) {
@@ -119,6 +133,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                 Place.Field.DISPLAY_NAME, Place.Field.FORMATTED_ADDRESS, Place.Field.LOCATION);
         FetchPlaceRequest.Builder builder = FetchPlaceRequest.builder(prediction.getPlaceId(), fields);
         if (token != null) builder.setSessionToken(token);
+
         placesClient.fetchPlace(builder.build())
                 .addOnSuccessListener(response -> {
                     if (!isAdded() || binding == null || selectionId != selectionRequestId) return;
@@ -167,7 +182,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                 loadedTrip = (Trip) getArguments().getSerializable(ARG_TRIP);
             }
         }
-        // Initialize Places SDK if not initialized
+        // Initialize Places SDK with New Places API enabled
         String apiKey = getString(R.string.maps_api_key);
         if (!Places.isInitialized()) {
             Places.initializeWithNewPlacesApiEnabled(requireContext().getApplicationContext(), apiKey);
@@ -186,6 +201,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Display user greeting in header from Firebase Auth
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             String name = currentUser.getDisplayName();
@@ -195,6 +211,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
             binding.textViewUserHeader.setText("Trip Planner (" + name + ")");
         }
 
+        // Logout button click handler
         binding.buttonLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             if (mListener != null) {
@@ -202,6 +219,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
+        // Navigate to Saved Trips screen
         binding.buttonSavedTrips.setOnClickListener(v -> {
             if (mListener != null) {
                 mListener.onViewSavedTrips();
@@ -215,6 +233,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
 
         binding.buttonSaveTrip.setOnClickListener(v -> saveCurrentTripToFirestore());
 
+        // Obtain SupportMapFragment and notify when map is ready
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
@@ -231,6 +250,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
+        // If a saved trip was passed from SavedTripsFragment, render it on the map
         if (loadedTrip != null) {
             displayLoadedTrip(loadedTrip);
         }
@@ -243,6 +263,10 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Calls RoutesAndPlacesClient.fetchRoute to get polyline directions between start and destination,
+     * then decodes polyline, draws blue route, and triggers gas station searches at start, mid, and end.
+     */
     private void fetchRouteAndGasStations() {
         if (startPlace == null || endPlace == null) return;
         LatLng startLatLng = startPlace.getLocation();
@@ -268,7 +292,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                 endLatLng.latitude, endLatLng.longitude, apiKey, new RoutesAndPlacesClient.RouteCallback() {
                     @Override
                     public void onSuccess(String encodedPolyline) {
-                        if (requestId != currentRequestId || !isAdded()) return; // Stale request check
+                        if (requestId != currentRequestId || !isAdded()) return;
 
                         currentEncodedPolyline = encodedPolyline;
                         if (mMap == null) return;
@@ -276,7 +300,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                         mMap.clear();
                         currentGasStations.clear();
 
-                        // Decode polyline points
+                        // Decode polyline points and draw blue route on map
                         List<LatLng> points = PolyUtil.decode(encodedPolyline);
                         if (!points.isEmpty()) {
                             mMap.addPolyline(new PolylineOptions()
@@ -285,7 +309,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                                     .width(12f));
                         }
 
-                        // Add Start and End markers
+                        // Add Start (Green) and Destination (Red) markers
                         mMap.addMarker(new MarkerOptions()
                                 .position(startLatLng)
                                 .title("Start: " + startPlace.getDisplayName())
@@ -298,7 +322,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                                 .snippet(endPlace.getFormattedAddress())
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 
-                        // Adjust Camera
+                        // Adjust Camera bounds to include start, end, and all route points
                         LatLngBounds.Builder builder = new LatLngBounds.Builder();
                         builder.include(startLatLng);
                         builder.include(endLatLng);
@@ -307,7 +331,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                         }
                         mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 120));
 
-                        // Calculate Midpoint
+                        // Calculate Route Midpoint
                         LatLng midLatLng;
                         if (!points.isEmpty()) {
                             midLatLng = points.get(points.size() / 2);
@@ -315,7 +339,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                             midLatLng = SphericalUtil.interpolate(startLatLng, endLatLng, 0.5);
                         }
 
-                        // Fetch Gas Stations at Start, End, and Mid
+                        // Fetch Gas Stations at Start, End, and Midpoint locations
                         fetchGasStationsForLocations(startLatLng, midLatLng, endLatLng, apiKey, requestId);
                     }
 
@@ -328,6 +352,9 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                 });
     }
 
+    /**
+     * Fetches gas stations concurrently for Start, Mid, and End locations using Places API (New).
+     */
     private void fetchGasStationsForLocations(LatLng start, LatLng mid, LatLng end, String apiKey, final int requestId) {
         final int[] completed = {0};
         final boolean[] failed = {false};
@@ -376,6 +403,9 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
         RoutesAndPlacesClient.fetchGasStationsNearby(requireContext(), end, "End", apiKey, callback);
     }
 
+    /**
+     * Renders a previously saved trip loaded from Firebase Firestore onto the map.
+     */
     private void displayLoadedTrip(Trip trip) {
         if (mMap == null || trip == null) return;
         mMap.clear();
@@ -383,15 +413,14 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
         binding.textViewStartAddress.setText(trip.getStartAddress());
         binding.textViewEndAddress.setText(trip.getEndAddress());
 
-        // Configure save button for loaded trip view
-        // Previously saved trips are viewed, not duplicated.
+        // Saved trips are read-only views, so disable save button
         binding.buttonSaveTrip.setEnabled(false);
         binding.buttonSaveTrip.setText(R.string.save_trip);
 
         LatLng startLatLng = new LatLng(trip.getStartLat(), trip.getStartLng());
         LatLng endLatLng = new LatLng(trip.getEndLat(), trip.getEndLng());
 
-        // Start & End Markers
+        // Add Start and Destination markers
         mMap.addMarker(new MarkerOptions()
                 .position(startLatLng)
                 .title("Start Location")
@@ -404,7 +433,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                 .snippet(trip.getEndAddress())
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 
-        // Polyline
+        // Decode and render polyline route
         if (trip.getEncodedPolyline() != null && !trip.getEncodedPolyline().isEmpty()) {
             List<LatLng> points = PolyUtil.decode(trip.getEncodedPolyline());
             mMap.addPolyline(new PolylineOptions()
@@ -421,7 +450,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
             mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 120));
         }
 
-        // Saved Gas Stations
+        // Render saved gas station markers
         if (trip.getGasStations() != null) {
             for (GasStation gs : trip.getGasStations()) {
                 mMap.addMarker(new MarkerOptions()
@@ -451,6 +480,10 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Saves the current trip plan to Cloud Firestore under the "trips" collection,
+     * associating it with the authenticated user's UID.
+     */
     private void saveCurrentTripToFirestore() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {

@@ -7,15 +7,19 @@ package edu.charlotte.assignment11;
 
 import java.io.Serializable;
 
+/**
+ * Represents a nearby gas station discovered using the Places API (New).
+ * Stores name, formatted address, geographic coordinates, and its location category ("Start", "End", or "Mid").
+ */
 public class GasStation implements Serializable {
     private String name;
     private String address;
     private double lat;
     private double lng;
-    private String locationType; // "Start", "End", "Mid"
+    private String locationType; // Categorization: "Start", "End", or "Mid"
 
     public GasStation() {
-        // Required for Firestore
+        // Required empty constructor for Firestore object mapping
     }
 
     public GasStation(String name, String address, double lat, double lng, String locationType) {

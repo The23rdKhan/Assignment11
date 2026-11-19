@@ -22,6 +22,10 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 
 import edu.charlotte.assignment11.databinding.FragmentSignupBinding;
 
+/**
+ * SignUpFragment handles new user account creation with Firebase Authentication
+ * and updates the user's display name profile. Communicates back to MainActivity via SignUpListener.
+ */
 public class SignUpFragment extends Fragment {
 
     private FragmentSignupBinding binding;
@@ -57,6 +61,7 @@ public class SignUpFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Handle user registration click
         binding.buttonRegister.setOnClickListener(v -> {
             String name = binding.editTextName.getText() != null ? binding.editTextName.getText().toString().trim() : "";
             String email = binding.editTextEmail.getText() != null ? binding.editTextEmail.getText().toString().trim() : "";
@@ -77,11 +82,13 @@ public class SignUpFragment extends Fragment {
                 return;
             }
 
+            // Create account with Firebase Authentication
             FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                             if (user != null) {
+                                // Update Firebase user profile with display name
                                 UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                         .setDisplayName(name)
                                         .build();
@@ -102,6 +109,7 @@ public class SignUpFragment extends Fragment {
                     });
         });
 
+        // Cancel registration and return to login
         binding.buttonCancel.setOnClickListener(v -> {
             if (mListener != null) {
                 mListener.onCancelSignUp();

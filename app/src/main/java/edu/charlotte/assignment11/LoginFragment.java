@@ -20,6 +20,10 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import edu.charlotte.assignment11.databinding.FragmentLoginBinding;
 
+/**
+ * LoginFragment handles user authentication sign-in using Firebase Authentication.
+ * Communicates success or navigation requests to MainActivity via LoginListener.
+ */
 public class LoginFragment extends Fragment {
 
     private FragmentLoginBinding binding;
@@ -55,6 +59,7 @@ public class LoginFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Handle login button click
         binding.buttonLogin.setOnClickListener(v -> {
             String email = binding.editTextEmail.getText().toString().trim();
             String password = binding.editTextPassword.getText().toString().trim();
@@ -69,6 +74,7 @@ public class LoginFragment extends Fragment {
                 return;
             }
 
+            // Authenticate user with Firebase Auth
             FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
@@ -82,6 +88,7 @@ public class LoginFragment extends Fragment {
                     });
         });
 
+        // Navigate to Sign Up screen
         binding.buttonCreateAccount.setOnClickListener(v -> {
             if (mListener != null) {
                 mListener.onGoToSignUp();
@@ -92,6 +99,6 @@ public class LoginFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
+        binding = null; // Prevent memory leaks with ViewBinding
     }
 }

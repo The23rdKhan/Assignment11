@@ -27,6 +27,10 @@ import java.util.List;
 
 import edu.charlotte.assignment11.databinding.FragmentSavedTripsBinding;
 
+/**
+ * SavedTripsFragment fetches and displays the authenticated user's saved trips from Cloud Firestore.
+ * Allows viewing selected trips on the map or deleting trips with a confirmation dialog.
+ */
 public class SavedTripsFragment extends Fragment implements SavedTripsAdapter.OnTripClickListener {
 
     private FragmentSavedTripsBinding binding;
@@ -77,6 +81,9 @@ public class SavedTripsFragment extends Fragment implements SavedTripsAdapter.On
         loadTripsFromFirestore();
     }
 
+    /**
+     * Query Cloud Firestore for trips belonging to the currently authenticated user (UID).
+     */
     private void loadTripsFromFirestore() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
@@ -86,16 +93,17 @@ public class SavedTripsFragment extends Fragment implements SavedTripsAdapter.On
                 .whereEqualTo("userId", user.getUid())
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (binding == null || !isAdded()) return;
                     binding.progressBar.setVisibility(View.GONE);
                     tripList.clear();
                     for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                         Trip trip = doc.toObject(Trip.class);
                         if (trip != null) {
-                            trip.setDocId(doc.getId());
+                            trip.setDocId(doc.getId()); // Store Firestore Document ID
                             tripList.add(trip);
                         }
                     }
-                    // Sort in memory by createdAt descending to avoid requiring composite Firestore index
+                    // Sort in memory by createdAt descending to show newest trips first
                     java.util.Collections.sort(tripList, (t1, t2) -> Long.compare(t2.getCreatedAt(), t1.getCreatedAt()));
                     adapter.notifyDataSetChanged();
 
@@ -106,6 +114,7 @@ public class SavedTripsFragment extends Fragment implements SavedTripsAdapter.On
                     }
                 })
                 .addOnFailureListener(e -> {
+                    if (binding == null || !isAdded()) return;
                     binding.progressBar.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Failed to load trips: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
@@ -118,6 +127,9 @@ public class SavedTripsFragment extends Fragment implements SavedTripsAdapter.On
         }
     }
 
+    /**
+     * Requires confirmation before deleting a saved trip from Cloud Firestore.
+     */
     @Override
     public void onDeleteClick(Trip trip) {
         if (trip.getDocId() == null) return;
