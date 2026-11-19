@@ -1,35 +1,54 @@
-# Assignment 11 - Android Trip Planner
+# Assignment 11 - Android Trip Planner (100 Points)
 
 **Full Name of Student:** Lucnel Nordelus  
-**Course / Assignment:** Assignment 11  
+**Course:** Mobile App Development - Assignment 11  
 
 ---
 
-## Overview
-Assignment 11 is an Android application built in Java that allows users to plan road trips, view custom driving routes using the Routes API v2, discover gas stations along the route using the Places API (New), and securely save or manage their trips using Firebase Authentication and Cloud Firestore.
-
-## Features
-- **Firebase Authentication:** Secure user registration, login, logout, and persistent sessions.
-- **Places Autocomplete:** Utilizes `PlaceAutocomplete.IntentBuilder` and Places API (New) to select start and destination locations.
-- **Driving Route & Polyline:** Fetches and draws a blue driving route polyline between start and destination using Google Routes API v2.
-- **Gas Station Finder:** Automatically searches for and displays gas stations near the start, midpoint, and destination using Places API (New) nearby search.
-- **Cloud Firestore Storage:** Saves trips associated with the authenticated user's UID.
-- **Saved Trips Management:** View saved trips, inspect routes on the map, and delete saved trips with confirmation dialogs.
-- **Secure Firestore Rules:** Ensures authenticated access and strict ownership enforcement.
+## Basic Instructions & Compliance
+1. **File Headers:** Every submitted Java file includes:
+   ```java
+   /**
+    * Assignment 11
+    * File Name: [ActualFileName.java]
+    * Full Name of Student: Lucnel Nordelus
+    */
+   ```
+2. **Submission Archive:** The project is zipped into `Assignment11.zip` (excluding generated build artifacts, `.gradle`, `.idea`, and `local.properties`).
 
 ---
 
-## Tech Stack & Libraries
-- **Language:** Java
-- **UI Architecture:** Fragments, ViewBinding, ConstraintLayout, Material Design 3
-- **Google Maps & Places:** Google Maps SDK for Android (`play-services-maps`), Places SDK (`6.0.2`), Places API (New), Routes API v2, Android Maps Utils (`PolyUtil`, `SphericalUtil`)
-- **Backend & Database:** Firebase Authentication, Cloud Firestore
-- **Networking & JSON:** OkHttp, Gson
+## Assignment Overview & APIs Used
+In this assignment, we implement a direction and place trip planning app using several Google APIs and Firebase:
+1. **Places Autocomplete SDK**: Used for picking start and end locations.
+2. **Routes API**: Used for finding driving directions between start and destination.
+3. **Places API**: Used for finding gas stations at the start, end, and mid path locations.
+4. **Firebase Authentication**: Used for user login and registration.
+5. **Cloud Firestore**: Used for storing and retrieving trip plans.
+6. **Google Maps SDK for Android**: Used for map visualization and markers.
+
+---
+
+## App Requirements
+1. **Firebase Authentication:** Allow users to login and register with persistent sessions. Trips are associated with the authenticated user's UID.
+2. **Google Maps Integration:** Integrate Google Maps in the app.
+3. **Trip Planning & Firestore Storage:** Allow the user to create trip plans, which include the start location, destination location, path from start to destination, and gas stations at start, end, and mid path locations. Stored under Firebase Firestore.
+4. **Adding a New Trip:**
+   - Pick start location and end location using the Places Autocomplete SDK.
+   - Display location addresses on the screen after selection.
+   - When both start and end locations are selected, use the **Routes API** to find directions between start and end.
+   - Display the returned route from the Routes API on the Google Map as a polyline.
+   - Using the **Places API**: find gas stations at the start, end, and mid path locations and display the results on the Google Map.
+5. **Viewing Stored Trips:**
+   - Users can view their stored trips.
+   - Upon selecting a stored trip, all trip information is loaded from Firebase.
+   - Display the returned route on the Google Map as a polyline.
+   - Display the stored gas stations at the start, end, and mid path locations loaded from Firebase.
 
 ---
 
 ## Firestore Security Rules
-Make sure to publish the following rules in your Firebase Console under **Firestore Database -> Rules**:
+Publish the following rules in your Firebase Console under **Firestore Database -> Rules**:
 
 ```firestore
 rules_version = '2';
