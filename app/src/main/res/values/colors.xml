@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Assignment 11
+  File Name: colors.xml
+  Full Name of Student: Lucnel Nordelus
+-->
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="accent">#00ACC1</color>
+    <color name="green_start">#388E3C</color>
+    <color name="red_end">#D32F2F</color>
+    <color name="orange_gas">#F57C00</color>
+</resources>

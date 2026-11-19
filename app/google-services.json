@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "377901818113",
+    "project_id": "assignment11-f4b20",
+    "storage_bucket": "assignment11-f4b20.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:377901818113:android:83d6cd854938c801067b00",
+        "android_client_info": {
+          "package_name": "edu.charlotte.assignment11"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCimr258AvhYLCs18gP4MXnUZ7FrqQCfI8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
